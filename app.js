@@ -9,10 +9,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 var app = express();
 
-<<<<<<< HEAD
+
 const setTimeRoutes = require('./routes/setTimeRoutes');
-=======
->>>>>>> 3a77cec5cc387a8f6fc543fa41f6e139bc86b7c4
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -49,8 +48,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-<<<<<<< HEAD
+
 module.exports = app;
-=======
-module.exports = app;
->>>>>>> 3a77cec5cc387a8f6fc543fa41f6e139bc86b7c4
