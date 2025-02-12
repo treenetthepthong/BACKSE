@@ -4,5 +4,7 @@ const setTimeController = require('../controllers/setTimeController'); // นำ
 
 // เส้นทางสำหรับเพิ่มเวลาว่าง
 router.post('/set-time', setTimeController.addSetTime);
+router.put('/set-time/:id', setTimeController.editSetTime);
+router.delete('/set-time/:id', setTimeController.deleteSetTime);
 
 module.exports = router;
