@@ -2,7 +2,11 @@ const sql = require('mssql');
 
 const config = {
   user: 'SA',
+<<<<<<< HEAD
   password: 'runranrun123',
+=======
+  password: '1234',
+>>>>>>> 3a77cec5cc387a8f6fc543fa41f6e139bc86b7c4
   server: 'localhost', 
   database: 'SEPROJECT',
   options: {
@@ -22,4 +26,8 @@ const poolPromise = new sql.ConnectionPool(config)
 
 module.exports = {
   sql, poolPromise
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 3a77cec5cc387a8f6fc543fa41f6e139bc86b7c4
