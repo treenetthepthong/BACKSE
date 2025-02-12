@@ -11,6 +11,8 @@ var app = express();
 
 
 const setTimeRoutes = require('./routes/setTimeRoutes');
+const authRoutes = require('./routes/authRoutes');
+
 
 
 // view engine setup

@@ -2,10 +2,7 @@ const sql = require('mssql');
 
 const config = {
   user: 'SA',
-
   password: 'runranrun123',
-
-
   server: 'localhost', 
   database: 'SEPROJECT',
   options: {

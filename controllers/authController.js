@@ -1,38 +1,46 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sql = require('mssql'); // เพิ่มบรรทัดนี้เพื่อให้ใช้งานได้
 const { poolPromise } = require('../config/dbconfig'); // ใช้การเชื่อมต่อกับฐานข้อมูลที่ตั้งไว้
 
 // สำหรับการเข้าสู่ระบบ (Login)
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password_hash } = req.body;
 
   try {
     const pool = await poolPromise;
-    const userResult = await pool.request()
-      .input('username', username)
-      .query('SELECT * FROM Users WHERE username = @username');
+    const result = await pool.request()
+      .input('email', sql.VarChar, email)  // ตรวจสอบให้แน่ใจว่าใช้ sql กับ `input`
+      .query('SELECT * FROM Users WHERE email = @email');
 
-    if (userResult.recordset.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+    if (result.recordset.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = userResult.recordset[0];
-    // ตรวจสอบรหัสผ่านที่กรอกเข้ามา
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    const user = result.recordset[0];
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+    console.log('Password from DB:', user.password_hash);
+    console.log('Password from request:', password_hash);
+
+    // เปรียบเทียบรหัสผ่านที่กรอกกับรหัสผ่านที่เก็บไว้ในฐานข้อมูล
+    if (password_hash === user.password_hash) {
+      // สร้าง JWT token หากรหัสผ่านตรง
+      const token = jwt.sign(
+        { userId: user.user_id, email: user.email },
+        process.env.JWT_SECRET || 'yourSecretKey',
+        { expiresIn: '1h' } // Token หมดอายุใน 1 ชั่วโมง
+      );
+
+      return res.status(200).json({
+        message: 'Login successful',
+        token,
+        username: user.username,
+        role: user.role
+      });
+    } else {
+      return res.status(401).json({ error: 'Invalid email or password' });  // รหัสผ่านไม่ตรง
     }
-
-    // ถ้ารหัสผ่านถูกต้อง, สร้าง JWT token
-    const token = jwt.sign(
-      { userId: user.user_id, username: user.username },
-      'yourSecretKey', // ควรเก็บไว้ใน environment variable
-      { expiresIn: '1h' } // token หมดอายุหลังจาก 1 ชั่วโมง
-    );
-
-    res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
-    res.status(500).json({ error: 'Login failed: ' + error.message });
+    console.error(error);  // แสดงข้อผิดพลาดใน console
+    return res.status(500).json({ message: 'Server error' });  // ข้อผิดพลาดที่เกิดจาก server
   }
 };
