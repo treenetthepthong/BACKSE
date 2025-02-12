@@ -4,7 +4,7 @@ const config = {
   user: 'SA',
   password: 'runranrun123',
   server: 'localhost', 
-  database: 'bus',
+  database: 'SEPROJECT',
   options: {
     encrypt: true,
     enableArithAbort: true,
