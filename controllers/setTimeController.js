@@ -1,5 +1,21 @@
 const { poolPromise, sql } = require('../config/dbconfig');
 
+// setTimeController.js
+exports.getTimes = async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    // ดึงข้อมูลเวลาจากฐานข้อมูล
+    const result = await pool.request()
+      .query('SELECT * FROM Availability'); // ใช้คำสั่ง SQL สำหรับดึงข้อมูลเวลาทั้งหมด
+
+    // ส่งผลลัพธ์กลับไปให้ frontend
+    res.status(200).json(result.recordset); // ส่งกลับเป็น JSON
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching time slots' });
+  }
+};
+
 // ฟังก์ชันสำหรับการเพิ่มเวลา
 exports.addSetTime = async (req, res) => {
   const { date, startTime, endTime } = req.body;
