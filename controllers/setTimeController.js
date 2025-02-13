@@ -19,12 +19,15 @@ exports.getTimes = async (req, res) => {
 // ฟังก์ชันสำหรับการเพิ่มเวลา
 exports.addSetTime = async (req, res) => {
   const { date, startTime, endTime } = req.body;
+  const formattedStartTime = `${startTime}:00`;  // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
+  const formattedEndTime = `${endTime}:00`;      // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
+  
   try {
     const pool = await poolPromise;
     await pool.request()
       .input('date', sql.Date, date)
-      .input('startTime', sql.Time, startTime)
-      .input('endTime', sql.Time, endTime)
+      .input('startTime', sql.Time, startTime) // Ensure SQL Time type is used
+      .input('endTime', sql.Time, endTime)     // Ensure SQL Time type is used
       .query(`
         INSERT INTO Availability (available_date, start_time, end_time)
         VALUES (@date, @startTime, @endTime)
@@ -48,8 +51,8 @@ exports.editSetTime = async (req, res) => {
       return res.status(400).json({ error: "Please provide valid date, startTime, and endTime" });
     }
     // แปลงเวลาที่ได้รับเป็นรูปแบบที่สามารถใช้งานกับ SQL Server
-    const formattedStartTime = startTime;  // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
-    const formattedEndTime = endTime;      // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
+    const formattedStartTime = `${startTime}:00`;  // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
+    const formattedEndTime = `${endTime}:00`;      // ใช้เวลาแบบตรง ๆ ไม่ต้องแปลง
 
     // คำสั่ง SQL สำหรับการอัปเดต
     const result = await pool.request()
