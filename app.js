@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+
 const cors = require('cors');
 const bodyParser = require('body-parser');
 var app = express();
@@ -12,7 +13,7 @@ var app = express();
 
 const setTimeRoutes = require('./routes/setTimeRoutes');
 const authRoutes = require('./routes/authRoutes');
-
+const AvailableTimesRoutes = require('./routes/AvailableTimesRoutes');
 
 
 // view engine setup
@@ -30,6 +31,8 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/settime', setTimeRoutes);
 app.use('/auth', authRoutes);
+app.use('/AvailableTimes', AvailableTimesRoutes);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
