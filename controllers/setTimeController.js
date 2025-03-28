@@ -16,30 +16,44 @@ exports.getTimes = async (req, res) => {
   }
 };
 
+// ฟังก์ชันสำหรับการเพิ่มเวลา
 exports.addSetTime = async (req, res) => {
-  const { date, startTime, endTime } = req.body;
-
-  const formatTime = (t) => t.length === 5 ? `${t}:00` : t;
-
-  const formattedStartTime = formatTime(startTime);
-  const formattedEndTime = formatTime(endTime);
+  const { date, startTime, endTime, userId } = req.body;
 
   try {
     const pool = await poolPromise;
+
+    // ค้นหา professor_id จาก user_id ในตาราง Professors
+    const professorResult = await pool.request()
+      .input('userId', sql.Int, userId)
+      .query('SELECT professor_id FROM Professors WHERE user_id = @userId');
+
+    if (professorResult.recordset.length === 0) {
+      return res.status(404).json({ error: 'Professor not found for this user' });
+    }
+
+    // ดึง professor_id จากผลลัพธ์
+    const professorId = professorResult.recordset[0].professor_id;
+
+    // บันทึกเวลาลงใน Availability
     await pool.request()
       .input('date', sql.Date, date)
-      .input('startTime', sql.VarChar, formattedStartTime)
-      .input('endTime', sql.VarChar, formattedEndTime)
+      .input('startTime', sql.VarChar, startTime)
+      .input('endTime', sql.VarChar, endTime)
+      .input('professorId', sql.Int, professorId) // ใช้ professorId ที่ได้จากการค้นหา
       .query(`
-        INSERT INTO Availability (available_date, start_time, end_time)
-        VALUES (@date, @startTime, @endTime)
+        INSERT INTO Availability (available_date, start_time, end_time, professor_id)
+        VALUES (@date, @startTime, @endTime, @professorId)
       `);
-    res.status(200).json({ message: 'Time slot added successfully' });
+
+    res.status(200).json({ message: 'Availability added successfully' });
   } catch (error) {
-    console.error("🔥 SQL Insert Error:", error);
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: 'Error adding availability' });
   }
 };
+
+
 
 
 

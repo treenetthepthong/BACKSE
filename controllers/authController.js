@@ -18,23 +18,20 @@ exports.login = async (req, res) => {
 
     const user = result.recordset[0];
 
-    console.log('Password from DB:', user.password_hash);
-    console.log('Password from request:', password_hash);
-
     // เปรียบเทียบรหัสผ่านที่กรอกกับรหัสผ่านที่เก็บไว้ในฐานข้อมูล
     if (password_hash === user.password_hash) {
       // สร้าง JWT token หากรหัสผ่านตรง
       const token = jwt.sign(
-        { userId: user.user_id, email: user.email },
-        process.env.JWT_SECRET || 'yourSecretKey',
-        { expiresIn: '1h' } // Token หมดอายุใน 1 ชั่วโมง
+        { userId: user.user_id, email: user.email }, 
+        process.env.JWT_SECRET || 'yourSecretKey', 
+        { expiresIn: '1h' }
       );
 
+      // ส่งข้อมูล response ที่คาดหวังใน frontend
       return res.status(200).json({
         message: 'Login successful',
         token,
-        username: user.username,
-        role: user.role
+        user: { id: user.user_id, username: user.username, role: user.role } // ส่งข้อมูล user ที่ต้องการ
       });
     } else {
       return res.status(401).json({ error: 'Invalid email or password' });  // รหัสผ่านไม่ตรง

@@ -21,21 +21,29 @@ exports.getTeachers = async (req, res) => {
   exports.getAvailableTimesForTeacher = async (req, res) => {
     const { teacherId, date } = req.params;
     try {
-      const pool = await poolPromise;
-      const result = await pool.request()
-        .input('teacherId', sql.Int, teacherId)
-        .input('date', sql.Date, date)
-        .query(`
-          SELECT available_date, start_time, end_time
-          FROM Availability
-          WHERE teacher_id = @teacherId AND available_date = @date
-        `);
-      res.status(200).json(result.recordset);
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('teacherId', sql.Int, teacherId)
+            .input('date', sql.Date, date)
+            .query(`
+                SELECT available_date, start_time, end_time
+                FROM Availability
+                WHERE professor_id = @teacherId AND available_date = @date
+            `);
+
+        // แปลงเวลาให้อยู่ในรูปแบบที่ frontend ต้องการ
+        const availableTimes = result.recordset.map(time => ({
+            available_date: time.available_date,
+            start_time: new Date(time.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            end_time: new Date(time.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+
+        res.status(200).json(availableTimes);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Error fetching available times' });
+        console.error(error);
+        res.status(500).json({ error: 'Error fetching available times' });
     }
-  };
+};
 
 // ฟังก์ชันสำหรับการจองเวลานัด
 exports.bookAppointment = async (req, res) => {
