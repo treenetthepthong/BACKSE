@@ -59,10 +59,6 @@ exports.bookappointment = async (req, res) => {
       .input('date', sql.Date, date)  // วันที่ที่อาจารย์กำหนด
       .input('availabilityId', sql.Int, availabilityId)
       .query(`
-<<<<<<< HEAD
-        SELECT * FROM Appointments
-        WHERE teacher_id = @teacherId AND appointment_date = @date AND start_time = @startTime AND end_time = @endTime
-=======
         SELECT a.appointment_id, a.student_id, a.professor_id, a.status, a.purpose, a.created_at, 
                av.available_date, av.start_time, av.end_time
         FROM Appointments a
@@ -70,7 +66,6 @@ exports.bookappointment = async (req, res) => {
         WHERE a.professor_id = @teacherId
         AND av.available_date = @date
         AND a.availability_id = @availabilityId;
->>>>>>> c608a4715e032927662bb97990b11937b015207c
       `);
 
     console.log("Check booking result:", checkBooking.recordset);
@@ -109,13 +104,8 @@ exports.bookappointment = async (req, res) => {
       .input('endTime', sql.Time, end_time)
       .input('availableDate', sql.Date, available_date)  // ใช้ available_date จาก Availability
       .query(`
-<<<<<<< HEAD
-        INSERT INTO Appointments (teacher_id, appointment_date, start_time, end_time)
-        VALUES (@teacherId, @date, @startTime, @endTime)
-=======
         INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id, available_date, start_time, end_time)
         VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId, @availableDate, @startTime, @endTime)
->>>>>>> c608a4715e032927662bb97990b11937b015207c
       `);
 
     console.log("Appointment booked successfully!");
