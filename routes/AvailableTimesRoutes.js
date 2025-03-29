@@ -9,6 +9,6 @@ router.get('/teachers', availableTimesController.getTeachers);
 router.get('/set-time/:teacherId/:date', availableTimesController.getAvailableTimesForTeacher);
 
 // เส้นทางสำหรับการจองเวลานัด
-router.post('/book-appointment', availableTimesController.bookAppointment);
+router.post('/book-appointment', availableTimesController.bookappointment);
 
 module.exports = router;
