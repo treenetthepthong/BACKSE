@@ -59,7 +59,7 @@ exports.bookAppointment = async (req, res) => {
       .input('startTime', sql.VarChar, startTime)
       .input('endTime', sql.VarChar, endTime)
       .query(`
-        SELECT * FROM BookedAppointments
+        SELECT * FROM Appointments
         WHERE teacher_id = @teacherId AND appointment_date = @date AND start_time = @startTime AND end_time = @endTime
       `);
 
@@ -74,7 +74,7 @@ exports.bookAppointment = async (req, res) => {
       .input('startTime', sql.VarChar, startTime)
       .input('endTime', sql.VarChar, endTime)
       .query(`
-        INSERT INTO BookedAppointments (teacher_id, appointment_date, start_time, end_time)
+        INSERT INTO Appointments (teacher_id, appointment_date, start_time, end_time)
         VALUES (@teacherId, @date, @startTime, @endTime)
       `);
 
