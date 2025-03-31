@@ -17,40 +17,43 @@ exports.getTeachers = async (req, res) => {
     }
 };
 
-  // ฟังก์ชันดึงเวลาที่อาจารย์เปิดให้จองตามวันที่เลือก
-  exports.getAvailableTimesForTeacher = async (req, res) => {
-    const { teacherId, date } = req.params;
-    try {
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('teacherId', sql.Int, teacherId)
-            .input('date', sql.Date, date)
-            .query(`
-                SELECT available_date, start_time, end_time
-                FROM Availability
-                WHERE professor_id = @teacherId AND available_date = @date
-            `);
+exports.getAvailableTimesForTeacher = async (req, res) => {
+  const { teacherId, date } = req.params;
+  if (!teacherId || !date) {
+    return res.status(400).json({ error: 'Invalid teacherId or date' });
+  }
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('teacherId', sql.Int, teacherId)
+      .input('date', sql.Date, date)
+      .query(`
+          SELECT available_date, start_time, end_time, availability_id
+          FROM Availability
+          WHERE professor_id = @teacherId AND available_date = @date
 
-        // แปลงเวลาให้อยู่ในรูปแบบที่ frontend ต้องการ
-        const availableTimes = result.recordset.map(time => ({
-            available_date: time.available_date,
-            start_time: new Date(time.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            end_time: new Date(time.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }));
+      `);
 
-        res.status(200).json(availableTimes);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error fetching available times' });
-    }
+    const availableTimes = result.recordset.map(time => ({
+      available_date: time.available_date,
+      start_time: new Date(time.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      end_time: new Date(time.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      availabilityId: time.availability_id, // แมปจาก availability_id เป็น availabilityId
+      isBooked: false // เพิ่มพร็อพเพอร์ตี้ isBooked ที่คอมโพเนนต์ของคุณคาดหวัง
+    }));
+
+    res.status(200).json(availableTimes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching available times' });
+  }
 };
-
 exports.bookappointment = async (req, res) => {
   const { teacherId, date, availabilityId, purpose, studentId, status } = req.body;
 
-
-
   try {
+    console.log('Received Data:', { teacherId, date, availabilityId, purpose, studentId, status });
+
     const pool = await poolPromise;
 
     // ตรวจสอบว่าเวลานี้ถูกจองไปแล้วหรือไม่ โดยใช้ availability_id และ available_date
@@ -74,25 +77,6 @@ exports.bookappointment = async (req, res) => {
       return res.status(400).json({ error: 'This time slot is already booked.' });
     }
 
-    // ไม่ต้องดึงข้อมูลเวลาแล้ว เพราะเราจะใช้แค่ availability_id
-    // เราจะไม่บันทึก available_date, start_time, end_time ใน Appointments
-
-
-
-
-
-
-
-
-
-    // บันทึกข้อมูลลงในตาราง Appointments
-
-
-
-
-
-
-
     await pool.request()
       .input('teacherId', sql.Int, teacherId)
       .input('date', sql.Date, date)  // ใช้ `date` สำหรับวันที่ที่นักเรียนจอง
@@ -100,16 +84,10 @@ exports.bookappointment = async (req, res) => {
       .input('purpose', sql.NVarChar, purpose)
       .input('status', sql.NVarChar, status)
       .input('availabilityId', sql.Int, availabilityId)
-      
-
-
       .query(`
         INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id)
         VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId)
       `);
-
-
-
     res.status(200).json({ message: 'Appointment booked successfully.' });
   } catch (error) {
     console.error(error);
