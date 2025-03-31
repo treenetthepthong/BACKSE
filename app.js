@@ -15,7 +15,6 @@ const setTimeRoutes = require('./routes/setTimeRoutes');
 const authRoutes = require('./routes/authRoutes');
 const AvailableTimesRoutes = require('./routes/AvailableTimesRoutes');
 const appointmentsRoutes = require('./routes/appointmentsRoutes');
-
 const historyRoutes = require('./routes/historyRoutes');
 
 // view engine setup
