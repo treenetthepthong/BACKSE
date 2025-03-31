@@ -14,6 +14,7 @@ var app = express();
 const setTimeRoutes = require('./routes/setTimeRoutes');
 const authRoutes = require('./routes/authRoutes');
 const AvailableTimesRoutes = require('./routes/AvailableTimesRoutes');
+const appointmentsRoutes = require('./routes/appointmentsRoutes');
 
 
 // view engine setup
@@ -32,7 +33,7 @@ app.use('/users', usersRouter);
 app.use('/settime', setTimeRoutes);
 app.use('/auth', authRoutes);
 app.use('/AvailableTimes', AvailableTimesRoutes);
-
+app.use('/appointments', appointmentsRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
