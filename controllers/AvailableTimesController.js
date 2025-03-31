@@ -48,15 +48,13 @@ exports.getTeachers = async (req, res) => {
 exports.bookappointment = async (req, res) => {
   const { teacherId, date, availabilityId, purpose, studentId, status } = req.body;
 
-  console.log("Received data:", { teacherId, date, availabilityId, purpose, studentId, status });
-
   try {
     const pool = await poolPromise;
 
     // ตรวจสอบว่าเวลานี้ถูกจองไปแล้วหรือไม่ โดยใช้ availability_id และ available_date
     const checkBooking = await pool.request()
       .input('teacherId', sql.Int, teacherId)
-      .input('date', sql.Date, date)  // วันที่ที่อาจารย์กำหนด
+      .input('date', sql.Date, date)  // วันที่ที่นักเรียนเลือก
       .input('availabilityId', sql.Int, availabilityId)
       .query(`
         SELECT a.appointment_id, a.student_id, a.professor_id, a.status, a.purpose, a.created_at, 
@@ -68,31 +66,15 @@ exports.bookappointment = async (req, res) => {
         AND a.availability_id = @availabilityId;
       `);
 
-    console.log("Check booking result:", checkBooking.recordset);
-
+    // ถ้าเวลานี้ถูกจองแล้ว ให้ส่งกลับข้อผิดพลาด
     if (checkBooking.recordset.length > 0) {
       return res.status(400).json({ error: 'This time slot is already booked.' });
     }
 
-    // ดึงข้อมูล start_time และ end_time จาก Availability
-    const availability = await pool.request()
-    .input('availabilityId', sql.Int, availabilityId)
-    .query(`
-      SELECT available_date, start_time, end_time 
-      FROM Availability 
-      WHERE availability_id = @availabilityId
-    `);
-  
-  console.log("Availability fetched:", availability.recordset);
+    // ไม่ต้องดึงข้อมูลเวลาแล้ว เพราะเราจะใช้แค่ availability_id
+    // เราจะไม่บันทึก available_date, start_time, end_time ใน Appointments
 
-    // ตรวจสอบว่าพบข้อมูลเวลาหรือไม่
-    if (availability.recordset.length === 0) {
-      return res.status(404).json({ error: 'Availability not found.' });
-    }
-
-    const { available_date, start_time, end_time } = availability.recordset[0];
-
-    // ถ้าไม่มีการจอง ให้บันทึกการจอง
+    // บันทึกข้อมูลลงในตาราง Appointments
     await pool.request()
       .input('teacherId', sql.Int, teacherId)
       .input('date', sql.Date, date)  // ใช้ `date` สำหรับวันที่ที่นักเรียนจอง
@@ -100,19 +82,15 @@ exports.bookappointment = async (req, res) => {
       .input('purpose', sql.NVarChar, purpose)
       .input('status', sql.NVarChar, status)
       .input('availabilityId', sql.Int, availabilityId)
-      .input('startTime', sql.Time, start_time)
-      .input('endTime', sql.Time, end_time)
-      .input('availableDate', sql.Date, available_date)  // ใช้ available_date จาก Availability
+      
       .query(`
-        INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id, available_date, start_time, end_time)
-        VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId, @availableDate, @startTime, @endTime)
+        INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id)
+        VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId)
       `);
-
-    console.log("Appointment booked successfully!");
 
     res.status(200).json({ message: 'Appointment booked successfully.' });
   } catch (error) {
-    console.error("Error:", error);
+    console.error(error);
     res.status(500).json({ error: 'Error booking appointment' });
   }
 };
