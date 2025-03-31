@@ -1,3 +1,4 @@
+
 const { poolPromise, sql } = require('../config/dbconfig');
 
 // ดึงรายชื่ออาจารย์ทั้งหมด
@@ -50,20 +51,33 @@ exports.getAvailableTimesForTeacher = async (req, res) => {
 };
 exports.bookappointment = async (req, res) => {
   const { teacherId, date, availabilityId, purpose, studentId, status } = req.body;
+  const userId = studentId; // ✅ นี่คือ user_id จริงๆ
 
   try {
     console.log('Received Data:', { teacherId, date, availabilityId, purpose, studentId, status });
 
     const pool = await poolPromise;
 
-    // ตรวจสอบว่าเวลานี้ถูกจองไปแล้วหรือไม่ โดยใช้ availability_id และ available_date
+    // 🔍 1. ดึง student_id จริงจาก user_id
+    const studentResult = await pool.request()
+      .input('userId', sql.Int, userId)
+      .query(`
+        SELECT student_id FROM Students WHERE user_id = @userId
+      `);
+
+    if (studentResult.recordset.length === 0) {
+      return res.status(400).json({ error: 'Student not found for the given user ID' });
+    }
+
+    const studentIdFromDb = studentResult.recordset[0].student_id; // ✅ ใช้ชื่อใหม่ ป้องกันชนกัน
+
+    // 🔒 2. ตรวจสอบว่าเวลานี้ถูกจองไปแล้วหรือยัง
     const checkBooking = await pool.request()
       .input('teacherId', sql.Int, teacherId)
-      .input('date', sql.Date, date)  // วันที่ที่นักเรียนเลือก
+      .input('date', sql.Date, date)
       .input('availabilityId', sql.Int, availabilityId)
       .query(`
-        SELECT a.appointment_id, a.student_id, a.professor_id, a.status, a.purpose, a.created_at, 
-               av.available_date, av.start_time, av.end_time
+        SELECT a.appointment_id
         FROM Appointments a
         JOIN Availability av ON a.availability_id = av.availability_id
         WHERE a.professor_id = @teacherId
@@ -71,16 +85,15 @@ exports.bookappointment = async (req, res) => {
         AND a.availability_id = @availabilityId;
       `);
 
-    // ถ้าเวลานี้ถูกจองแล้ว ให้ส่งกลับข้อผิดพลาด
-
     if (checkBooking.recordset.length > 0) {
       return res.status(400).json({ error: 'This time slot is already booked.' });
     }
 
+    // ✅ 3. สร้างการจอง
     await pool.request()
       .input('teacherId', sql.Int, teacherId)
-      .input('date', sql.Date, date)  // ใช้ `date` สำหรับวันที่ที่นักเรียนจอง
-      .input('studentId', sql.Int, studentId)
+      .input('date', sql.Date, date)
+      .input('studentId', sql.Int, studentIdFromDb) // ใช้ student_id ที่ได้จาก DB
       .input('purpose', sql.NVarChar, purpose)
       .input('status', sql.NVarChar, status)
       .input('availabilityId', sql.Int, availabilityId)
@@ -88,6 +101,7 @@ exports.bookappointment = async (req, res) => {
         INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id)
         VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId)
       `);
+
     res.status(200).json({ message: 'Appointment booked successfully.' });
   } catch (error) {
     console.error(error);
