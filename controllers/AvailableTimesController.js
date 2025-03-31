@@ -16,7 +16,7 @@ exports.getTeachers = async (req, res) => {
       res.status(500).json({ error: 'Error fetching teachers' });
     }
 };
-  
+
   // ฟังก์ชันดึงเวลาที่อาจารย์เปิดให้จองตามวันที่เลือก
   exports.getAvailableTimesForTeacher = async (req, res) => {
     const { teacherId, date } = req.params;
@@ -48,6 +48,8 @@ exports.getTeachers = async (req, res) => {
 exports.bookappointment = async (req, res) => {
   const { teacherId, date, availabilityId, purpose, studentId, status } = req.body;
 
+
+
   try {
     const pool = await poolPromise;
 
@@ -67,6 +69,7 @@ exports.bookappointment = async (req, res) => {
       `);
 
     // ถ้าเวลานี้ถูกจองแล้ว ให้ส่งกลับข้อผิดพลาด
+
     if (checkBooking.recordset.length > 0) {
       return res.status(400).json({ error: 'This time slot is already booked.' });
     }
@@ -74,7 +77,22 @@ exports.bookappointment = async (req, res) => {
     // ไม่ต้องดึงข้อมูลเวลาแล้ว เพราะเราจะใช้แค่ availability_id
     // เราจะไม่บันทึก available_date, start_time, end_time ใน Appointments
 
+
+
+
+
+
+
+
+
     // บันทึกข้อมูลลงในตาราง Appointments
+
+
+
+
+
+
+
     await pool.request()
       .input('teacherId', sql.Int, teacherId)
       .input('date', sql.Date, date)  // ใช้ `date` สำหรับวันที่ที่นักเรียนจอง
@@ -83,10 +101,14 @@ exports.bookappointment = async (req, res) => {
       .input('status', sql.NVarChar, status)
       .input('availabilityId', sql.Int, availabilityId)
       
+
+
       .query(`
         INSERT INTO Appointments (student_id, professor_id, created_at, status, purpose, availability_id)
         VALUES (@studentId, @teacherId, GETDATE(), @status, @purpose, @availabilityId)
       `);
+
+
 
     res.status(200).json({ message: 'Appointment booked successfully.' });
   } catch (error) {
