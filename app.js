@@ -16,6 +16,7 @@ const authRoutes = require('./routes/authRoutes');
 const AvailableTimesRoutes = require('./routes/AvailableTimesRoutes');
 const appointmentsRoutes = require('./routes/appointmentsRoutes');
 
+const historyRoutes = require('./routes/historyRoutes');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -34,6 +35,9 @@ app.use('/settime', setTimeRoutes);
 app.use('/auth', authRoutes);
 app.use('/AvailableTimes', AvailableTimesRoutes);
 app.use('/appointments', appointmentsRoutes);
+app.use('/history', historyRoutes);
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
