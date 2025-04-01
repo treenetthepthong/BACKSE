@@ -9,18 +9,20 @@ exports.getAppointments = async (req, res) => {
             .input('status', sql.NVarChar, 'pending')
             .query(`
                 SELECT 
-                    a.appointment_id,
-                    a.student_id, 
-                    a.status AS appointment_status, 
-                    s.full_name AS student_name,  
-                    av.available_date,
-                    av.start_time,
-                    av.end_time,
-                    a.purpose
+                a.appointment_id, 
+                a.status AS appointment_status , 
+                a.purpose,
+                av.available_date, 
+                av.start_time, 
+                av.end_time,
+                s.student_id, 
+                u.full_name AS student_name
                 FROM Appointments a
-                JOIN Users s ON a.student_id = s.user_id
                 JOIN Availability av ON a.availability_id = av.availability_id
-                WHERE a.status = @status
+                JOIN Students s ON a.student_id = s.student_id
+                JOIN Users u ON s.user_id = u.user_id
+                WHERE a.status = 'pending'  -- เพิ่มเงื่อนไขให้ดึงแค่ 'pending'
+                ORDER BY av.available_date 
             `)
 
         res.json(result.recordset);
